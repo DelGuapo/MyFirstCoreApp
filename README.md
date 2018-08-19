@@ -1,2 +1,2 @@
-# my-first-core-app
-Intro to .net core... with SQL controller
+# My First Net CORE app
+Playing around...
