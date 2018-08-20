@@ -6,6 +6,7 @@ using System.Data.SqlClient;
 using System.Web;
 using Newtonsoft.Json;
 using System.Text;
+using System.Collections.Generic;
 
 namespace MyFirstCoreApp
 {
@@ -13,12 +14,14 @@ namespace MyFirstCoreApp
     {
         // this is a shortcut for your connection string
         public static string DatabaseConnectionString;
+        public static int SQLTimeout;
         public Boolean KeepConnectionOpen;
         private SqlConnection Connection;
-        public SQLify(string cnString, Boolean KeepOpen = false)
+        public SQLify(string cnString, Boolean keepOpen = false, int timeout = 5400 )
         {
             DatabaseConnectionString = cnString;
-            KeepConnectionOpen = KeepOpen;
+            KeepConnectionOpen = keepOpen;
+            SQLTimeout = timeout;
             Connection = new SqlConnection(DatabaseConnectionString);
 
             if (KeepConnectionOpen)
@@ -34,7 +37,7 @@ namespace MyFirstCoreApp
         }
 
         // this is for just executing sql command with no value to return
-        public Boolean SqlExecute(string sql)
+        public Boolean SqlExecute(string sql, List<SqlParameter> sqlParams = null)
         {
             try
             {
@@ -42,6 +45,13 @@ namespace MyFirstCoreApp
                 using (Connection)
                 {
                     SqlCommand cmd = new SqlCommand(sql, Connection);
+                    if (sqlParams != null)
+                    {
+                        foreach (SqlParameter param in sqlParams)
+                        {
+                            cmd.Parameters.Add(param);
+                        }
+                    }
                     if (!KeepConnectionOpen) { cmd.Connection.Open(); }
                     cmd.ExecuteNonQuery();
                     return true;
@@ -55,7 +65,7 @@ namespace MyFirstCoreApp
         }
 
         // with this you will be able to return a value
-        public object SqlReturn(string sql)
+        public object SqlReturn(string sql, List<SqlParameter> sqlParams = null)
         {
             try
             {
@@ -63,6 +73,13 @@ namespace MyFirstCoreApp
                 {
 
                     SqlCommand cmd = new SqlCommand(sql, Connection);
+                    if (sqlParams != null)
+                    {
+                        foreach (SqlParameter param in sqlParams)
+                        {
+                            cmd.Parameters.Add(param);
+                        }
+                    }
                     if (!KeepConnectionOpen) { cmd.Connection.Open(); }
                     object result = (object)cmd.ExecuteScalar();
                     return result;
@@ -77,7 +94,7 @@ namespace MyFirstCoreApp
         }
 
         // with this you can retrieve an entire table or part of it
-        public DataSet SqlDataSet(string sql)
+        public DataSet SqlDataSet(string sql, List<SqlParameter> sqlParams = null)
         {
             DataSet dataset = new DataSet();
             try
@@ -86,7 +103,14 @@ namespace MyFirstCoreApp
                 {
                     SqlDataAdapter adapter = new SqlDataAdapter();
                     adapter.SelectCommand = new SqlCommand(sql, Connection);
-                    adapter.SelectCommand.CommandTimeout = 5400;
+                    if (sqlParams != null)
+                    {
+                        foreach (SqlParameter param in sqlParams)
+                        {
+                            adapter.SelectCommand.Parameters.Add(param);
+                        }
+                    }
+                    adapter.SelectCommand.CommandTimeout = SQLTimeout;
                     if (!KeepConnectionOpen) { Connection.Open(); }
                     adapter.Fill(dataset);
                     if (!KeepConnectionOpen) { Connection.Close(); }
@@ -98,7 +122,8 @@ namespace MyFirstCoreApp
             }
             return dataset;
         }
-        public DataTable SqlDataTable(string sql)
+
+        public DataTable SqlDataTable(string sql, List<SqlParameter> sqlParams = null)
         {
             try
             {
@@ -106,7 +131,14 @@ namespace MyFirstCoreApp
                 {
                     SqlCommand cmd = new SqlCommand(sql, Connection);
                     if (!KeepConnectionOpen) { cmd.Connection.Open(); }
-                    cmd.CommandTimeout = 5400;
+                    if (sqlParams != null)
+                    {
+                        foreach (SqlParameter param in sqlParams)
+                        {
+                            cmd.Parameters.Add(param);
+                        }
+                    }
+                    cmd.CommandTimeout = SQLTimeout;
                     DataTable TempTable = new DataTable();
                     TempTable.Load(cmd.ExecuteReader());
                     return TempTable;
@@ -116,7 +148,6 @@ namespace MyFirstCoreApp
                 // log error
             }
             return new DataTable();
-            
         }
 
         public static Int64 bulkUploadText(string filePath, string tableName, Int64 skipRows = 0)
