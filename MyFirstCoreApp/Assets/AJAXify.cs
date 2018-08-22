@@ -1,51 +1,135 @@
-﻿using System;
-using System.Net;
-using System.Net.Mail;
+﻿using Microsoft.Extensions.DependencyInjection;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using MailMessage = System.Net.Mail.MailMessage;
-using System.Threading.Tasks;
 using System.Net.Http;
-using Microsoft.Extensions.DependencyInjection;
+using System.Net.Http.Headers;
+using System.Threading.Tasks;
 
 namespace MyFirstCoreApp
 {
-    /// <summary>
-    /// services.AddHttpClient();// Add this line to your Startup.ConfigureServices
-    /// Download Microsoft.Extensions.Http  (NUGET)
-    /// </summary>
-    class AJAXify
+
+    public class AJAXify
     {
-        private readonly IHttpClientFactory _clientFactory;
-        public bool GetBranchesError { get; private set; }
-        public AJAXify(string url)
+        private _ajaxify ajax;
+        public  AJAXify()
         {
-
+            /* AJAXify is a public facing class that interfaces with a private class (_ajaxify).
+             * We needed to do this to inject the HTTPFactory to make it simple for the interfacor.
+             * This is equivilent to adding the service in the app Startup with addService()
+             */
+            var serviceCollection = new ServiceCollection();
+            serviceCollection.AddHttpClient();
+            
+            /* Create an instance of a _ajaxify class (below) and inject
+             * the services generated above
+             */
+            var services = serviceCollection.BuildServiceProvider();
+            ajax = ActivatorUtilities.CreateInstance<_ajaxify>(services);
         }
-        public async Task<string> RequestGet()
+
+        /* The following public facing procedures interact   are the two externally facing functions
+         *  that interact with private _cryptify.
+         */
+        public async Task<string> get(string url)
         {
-            string url = "http://127.0.0.1:5984/users";
-            var request = new HttpRequestMessage(HttpMethod.Get, url);
-            //request.Headers.Add("Accept", "application/vnd.github.v3+json");
-            //request.Headers.Add("User-Agent", "HttpClientFactory-Sample");
+            return await ajax._get(url);
+        }
 
-            var client = _clientFactory.CreateClient("TEST");
+        public async Task<string> post(string url)
+        {
+            return await ajax._post(url);
+        }
 
-            var response = await client.SendAsync(request);
+        public void addHeader(string name, string value)
+        {
+            List<string> contentType = new List<string>();
+            contentType.Add("CONTENT-TYPE");
 
-            if (response.IsSuccessStatusCode)
+
+            if (contentType.Contains(name.ToUpper()))
             {
-                //string rsp = await response.Content.ReadAsStringAsync();
-                //return rsp;
+                /* add as media headers */
+                
 
-                return await response.Content.ReadAsStringAsync();
             }
             else
             {
-                return "";
-                //GetBranchesError = true;
-                //Branches = Array.Empty<GitHubBranch>();
+                /* add as default header*/
+
+            }
+            
+
+            
+            ajax._addHeader(name, value);
+        }
+
+        
+
+
+        /* Private facing _cryptophy does the cryptographic work with the injected 
+         * DataProtectionProvider.
+         */
+        private class _ajaxify
+        {
+            HttpClient _client;
+            public _ajaxify(IHttpClientFactory factory)
+            {
+                _client = factory.CreateClient();
+            }
+
+            public void _addHeader(string name, string value, string type = "default")
+            {
+                switch (type)
+                {
+                    case "default":
+                        _client.DefaultRequestHeaders.Add(name, value);
+                        break;
+                    case "accepts":
+                        _client.DefaultRequestHeaders.Accept
+                        break;
+                    case "content":
+                        _client.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+                        break;
+
+                }
+
+
+                try
+                {
+                    
+                }
+                catch(Exception err)
+                {
+                    var s = err.ToString();
+                }
+                
+            }
+
+            public async Task<string> _get(string url)
+            {
+                var result = await _client.GetStringAsync(url);
+                return result;
+            }
+
+            public async Task<string> _post(string url, )
+            {
+                var values = new Dictionary<string, string>();
+                values.Add("property", "value");
+                var content = new FormUrlEncodedContent(values);
+                /* TODO: figure how to change content-type and pipe from public facing class.
+                 * https://stackoverflow.com/questions/10679214/how-do-you-set-the-content-type-header-for-an-httpclient-request
+                 */
+                var result = await _client.PostAsync(url,content);
+                if (result.IsSuccessStatusCode)
+                {
+                    return result.Content.ToString();
+                }
+                else
+                {
+                    return result.ReasonPhrase;
+                }
             }
         }
+
     }
 }
