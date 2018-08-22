@@ -13,12 +13,22 @@ namespace MyFirstCoreApp
         private _cryptophy crypt;
         public  Cryptify(string hash)
         {
+            /* Cryptify is a public facing class that interfaces with a private class (_cryptify).
+             * We needed to do this to inject the DataProtection
+             * This is equivilent to adding the service in the app Startup with addService()
+             */
             var serviceCollection = new ServiceCollection();
             serviceCollection.AddDataProtection();
+            
+            /* Create an instance of a _cryptography class (below) and inject the services added above
+             */
             var services = serviceCollection.BuildServiceProvider();
             crypt = ActivatorUtilities.CreateInstance<_cryptophy>(services,hash);
         }
 
+        /* [encode] andn [decode] are the two externally facing functions
+         *  that interact with private _cryptify.
+         */
         public string encode(string nakedValue)
         {
             return crypt.encode(nakedValue);
@@ -29,9 +39,12 @@ namespace MyFirstCoreApp
             return crypt.decode(encryptedValue);
         }
 
+
+        /* Private facing _cryptophy does the cryptographic work with the injected 
+         * DataProtectionProvider.
+         */
         private class _cryptophy
         {
-            // the 'provider' parameter is provided by DI
             IDataProtector _protector;
             public _cryptophy(IDataProtectionProvider provider, string hash)
             {
@@ -51,20 +64,7 @@ namespace MyFirstCoreApp
                 }
                 catch (Exception err)
                 {
-                    return @"
-                             _;~)                  (~;_
-                            (   |                  |   )
-                             ~', ',    ,''~'',   ,' ,'~
-                                 ', ','       ',' ,'
-                                   ',: {'} {'} :,'
-                                     ;   /^\   ;
-                                      ~\  ~  /~
-                                    ,' ,~~~~~, ',
-                                  ,' ,' ;~~~; ', ',
-                                ,' ,'    '''    ', ',
-                              (~  ;               ;  ~)
-                               -;_)               (_;-
-                            ";
+                    return new ASCIIify().skull;
                 }
                 
             }
