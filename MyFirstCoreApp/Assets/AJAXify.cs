@@ -35,32 +35,30 @@ namespace MyFirstCoreApp
             return await ajax._get(url);
         }
 
-        public async Task<string> post(string url)
+        public async Task<string> post(string url, object body = null)
         {
-            return await ajax._post(url);
+            return await ajax._post(url, body);
         }
 
         public void addHeader(string name, string value)
         {
+            string type = null;
             List<string> contentType = new List<string>();
             contentType.Add("CONTENT-TYPE");
+
+            List<string> accetpsType = new List<string>();
+            accetpsType.Add("ACCEPTS");
 
 
             if (contentType.Contains(name.ToUpper()))
             {
-                /* add as media headers */
-                
+                type = "content-type";
 
-            }
-            else
+            } else if (accetpsType.Contains(name.ToUpper()))
             {
-                /* add as default header*/
-
+                type = "accepts";
             }
-            
-
-            
-            ajax._addHeader(name, value);
+            ajax._addHeader(name, value, type);
         }
 
         
@@ -72,6 +70,7 @@ namespace MyFirstCoreApp
         private class _ajaxify
         {
             HttpClient _client;
+            string contentType = null;
             public _ajaxify(IHttpClientFactory factory)
             {
                 _client = factory.CreateClient();
@@ -85,10 +84,10 @@ namespace MyFirstCoreApp
                         _client.DefaultRequestHeaders.Add(name, value);
                         break;
                     case "accepts":
-                        _client.DefaultRequestHeaders.Accept
+                        // TODO: Add 'accepts' headers ... 
                         break;
-                    case "content":
-                        _client.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+                    case "content-type":
+                        contentType = value;
                         break;
 
                 }
@@ -111,18 +110,22 @@ namespace MyFirstCoreApp
                 return result;
             }
 
-            public async Task<string> _post(string url, )
+            public async Task<string> _post(string url, object body = null)
             {
-                var values = new Dictionary<string, string>();
-                values.Add("property", "value");
-                var content = new FormUrlEncodedContent(values);
+                string content = new Stringify().fromObject(body);
                 /* TODO: figure how to change content-type and pipe from public facing class.
                  * https://stackoverflow.com/questions/10679214/how-do-you-set-the-content-type-header-for-an-httpclient-request
                  */
-                var result = await _client.PostAsync(url,content);
+                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, url);
+                if (contentType != null)
+                {
+                    request.Content = new StringContent(content, null, contentType);
+                }
+
+                var result = await _client.SendAsync(request);
                 if (result.IsSuccessStatusCode)
                 {
-                    return result.Content.ToString();
+                    return await result.Content.ReadAsStringAsync();
                 }
                 else
                 {

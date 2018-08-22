@@ -100,11 +100,14 @@ namespace MyFirstCoreApp.Controllers
         }
 
         [HttpPost("AJAXify/post")]
-        public async Task<ActionResult> PostAjaxNamed()
+        public async Task<ActionResult> PostAjaxNamed([FromBody] User user) // <<== When using [FromBody], Content-Type must be application/json.
         {
             AJAXify ajax = new AJAXify();
             ajax.addHeader("Content-Type", "application/json");
-            var rsp = await ajax.post("http://127.0.0.1:5984/demo");
+            //User body = new MyFirstCoreApp.User();
+            //body.Name = "NAME";
+            //body.Role = "ROLE";
+            var rsp = await ajax.post("http://127.0.0.1:5984/demo", user);
             return Ok(rsp);
         }
 
