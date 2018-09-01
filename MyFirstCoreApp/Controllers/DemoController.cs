@@ -18,7 +18,12 @@ namespace MyFirstCoreApp.Controllers
             /* the IHttpClientFactory is injected for any routes needing AJAX controls */
             _httpClientFactory = httpClientFactory;
         }
-
+        /// <summary>
+        /// Base route for the DEMO controller
+        /// </summary>
+        /// <returns>
+        /// GRAVITY
+        /// </returns>
         [HttpGet]
         public IActionResult Get()
         {
@@ -26,24 +31,41 @@ namespace MyFirstCoreApp.Controllers
             return Ok(cool);
         }
 
+        /// <summary>
+        /// Given a connection string to the specified DB, run any SQL Server commands.
+        /// </summary>
+        /// <returns>JSON object of the result table</returns>
         [HttpGet("SQLify")]
         public IActionResult SQLifyDemo()
         {
-            string cnString = System.IO.File.ReadAllText("cnstring.txt");
-            SQLify sql = new SQLify(cnString, true);
+            if (System.IO.File.Exists("cnstring.txt"))
+            {
+                string cnString = System.IO.File.ReadAllText("cnstring.txt");
+                SQLify sql = new SQLify(cnString, true);
 
-            List<SqlParameter> sqlParams = new List<SqlParameter> {
+                List<SqlParameter> sqlParams = new List<SqlParameter> {
                 new SqlParameter("item_class", (object)"ItemCLASS"),
                 new SqlParameter("item_name", (object)"ItemName"),
                 new SqlParameter("item_value", (object)"ItemVal"),
                 new SqlParameter("item_descrip", (object)"ItemDescrip")
             };
-            string sqlText = "exec insConfig @item_class,@item_name,@item_value,@item_descrip";
-            DataTable rsp = sql.SqlDataTable(sqlText, sqlParams);
-            return Ok(new Stringify().fromTable(rsp));
+                string sqlText = "exec insConfig @item_class,@item_name,@item_value,@item_descrip";
+                DataTable rsp = sql.SqlDataTable(sqlText, sqlParams);
+                return Ok(new Stringify().fromTable(rsp));
+            }
+            else
+            {
+                return NotFound(@"This demo only works if you have a connection string provided (or cnstring.txt) and a valid SQL command");
+            }
+            
         }
 
-
+        /// <summary>
+        ///  COnvert your classes,datatables, and objects to strings for HTTP responses
+        /// </summary>
+        /// <returns>
+        /// JSON string of a user-defined class Object
+        /// </returns>
         [HttpGet("Stringify")]
         public IActionResult StringifyDemo()
         {
@@ -55,14 +77,27 @@ namespace MyFirstCoreApp.Controllers
             return Ok(new Stringify().fromObject(Obj));
         }
 
+        /// <summary>
+        ///  Connect your API to the SMTP server of your choice for emails.
+        /// </summary>
+        /// <param name="SMTP">SMTP Server used</param>
+        /// <param name="SMTPUser">Full email of the SMTP server above (user@server.com)</param>
+        /// <param name="SMTPPassword">Not ideal to use password in GET parameter, but this is just a demo right? </param>
+        /// <returns>HTTP result codes</returns>
         [HttpGet("Mailify")]
-        public IActionResult MailifyDemo()
+        public IActionResult MailifyDemo(string SMTP, string SMTPUser, string SMTPPassword)
         {
-            Mailify mail = new Mailify("SMTPserver", "USER@D.COM", "PWD", "FROM@junk.com");
-            string err = mail.send("RECIPIENT@EMAIL.COM", "SUBJECT", "BODY");
+            Mailify mail = new Mailify(SMTP, SMTPUser, SMTPPassword, "FROM@junk.com");
+            string err = mail.send("TARGETEMAIL@gmail.com", "SUBJECT", "BODY");
             if (err == "") { return Ok("Message Sent!"); } else { return BadRequest(err); }
         }
 
+        /// <summary>
+        /// Encrypt your objects with up-to-date .netCore encryption standards.
+        /// </summary>
+        /// <returns>
+        /// Demo encrypted "Secret Message" with the hash of "YOUR_HASH_HERE" used
+        /// </returns>
         [HttpGet("Cryptify")]
         public IActionResult CryptifyDemo()
         {
@@ -73,7 +108,12 @@ namespace MyFirstCoreApp.Controllers
 
         }
 
-
+        /// <summary>
+        /// Execute AJAX commands (the current route uses COUCH db as demo)
+        /// </summary>
+        /// <returns>
+        /// STRING of AJAX results
+        /// </returns>
         [HttpGet("AJAXify")]
         public async Task<IActionResult> AJAXifyDemo()
         {
@@ -81,6 +121,7 @@ namespace MyFirstCoreApp.Controllers
             var rsp = await ajax.get("http://127.0.0.1:5984/users/1");
             return Ok(rsp);
         }
+
 
         [HttpGet("AJAXify/basic")]
         public async Task<ActionResult> GetAjax()
@@ -91,6 +132,13 @@ namespace MyFirstCoreApp.Controllers
             return Ok(result);
         }
 
+        /// <summary>
+        /// Using a named connection defined at the [Program.cs] level ensures a singleton approach to http connectionns 
+        /// rather than the slower open-and-dispose approach.
+        /// </summary>
+        /// <returns>
+        /// JSON String of the inserted object (this demo route uses couch get command)
+        /// </returns>
         [HttpGet("AJAXify/named")]
         public async Task<ActionResult> GetAjaxNamed()
         {
@@ -99,6 +147,13 @@ namespace MyFirstCoreApp.Controllers
             return Ok(result);
         }
 
+        /// <summary>
+        /// AJAX commands also allows for POSt commands
+        /// </summary>
+        /// <param name="user"></param>
+        /// <returns>
+        /// JSON String of the inserted object (this demo route uses couch insert command)
+        /// </returns>
         [HttpPost("AJAXify/post")]
         public async Task<ActionResult> PostAjaxNamed([FromBody] User user) // <<== When using [FromBody], Content-Type must be application/json.
         {
