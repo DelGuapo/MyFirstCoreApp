@@ -178,29 +178,21 @@ namespace MyFirstCoreApp.Controllers
         [HttpPost("upload")]
         public async Task<IActionResult> Post(List<IFormFile> files)
         {
+            
+
+            
+
             long size = files.Sum(f => f.Length);
 
-            // full path to file in temp location
-            var filePath = Path.GetTempFileName();
-
-            foreach (var formFile in files)
+            if(files.Count != 0)
             {
-                if (formFile.Length > 0)
-                {
-                    using (var stream = new FileStream(filePath, FileMode.Create))
-                    {
-                        string fileName = ContentDispositionHeaderValue.Parse(formFile.ContentDisposition).FileName.Trim('"');
-                        await formFile.CopyToAsync(stream);
-                    }
-
-                    
-                }
+                return BadRequest("No files found.  Ensure that the name in the key:value pair of your file is called [files]");
             }
-
-            // process uploaded files
-            // Don't rely on or trust the FileName property without validation.
-
-            return Ok(new { count = files.Count, size, filePath });
+            else
+            {
+                Uploadify uploads = new Uploadify("target path");
+                return Ok(uploads.UploadFiles(files));
+            }
         }
     }
 }
