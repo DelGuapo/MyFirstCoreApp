@@ -5,6 +5,10 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Threading.Tasks;
 using System.Net.Http;
+using System.Linq;
+using Microsoft.AspNetCore.Http;
+using System.IO;
+using System.Net.Http.Headers;
 
 namespace MyFirstCoreApp.Controllers
 {
@@ -57,7 +61,7 @@ namespace MyFirstCoreApp.Controllers
             {
                 return NotFound(@"This demo only works if you have a connection string provided (or cnstring.txt) and a valid SQL command");
             }
-            
+
         }
 
         /// <summary>
@@ -166,5 +170,37 @@ namespace MyFirstCoreApp.Controllers
             return Ok(rsp);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="files"></param>
+        /// <returns></returns>
+        [HttpPost("upload")]
+        public async Task<IActionResult> Post(List<IFormFile> files)
+        {
+            long size = files.Sum(f => f.Length);
+
+            // full path to file in temp location
+            var filePath = Path.GetTempFileName();
+
+            foreach (var formFile in files)
+            {
+                if (formFile.Length > 0)
+                {
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        string fileName = ContentDispositionHeaderValue.Parse(formFile.ContentDisposition).FileName.Trim('"');
+                        await formFile.CopyToAsync(stream);
+                    }
+
+                    
+                }
+            }
+
+            // process uploaded files
+            // Don't rely on or trust the FileName property without validation.
+
+            return Ok(new { count = files.Count, size, filePath });
+        }
     }
 }

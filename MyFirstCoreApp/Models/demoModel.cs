@@ -11,5 +11,6 @@ namespace MyFirstCoreApp
         public DateTime MyDate { get; set; }
         public int MyNumber { get; set; }
         public string MyNull { get; set; }
+        public string Email { get; set; }
     }
 }

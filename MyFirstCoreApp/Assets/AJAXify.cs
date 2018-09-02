@@ -45,7 +45,6 @@ namespace MyFirstCoreApp
             string type = null;
             List<string> contentType = new List<string>();
             contentType.Add("CONTENT-TYPE");
-
             List<string> accetpsType = new List<string>();
             accetpsType.Add("ACCEPTS");
 
@@ -56,7 +55,7 @@ namespace MyFirstCoreApp
 
             } else if (accetpsType.Contains(name.ToUpper()))
             {
-                type = "accepts";
+                //type = "accepts"; // <<== I think 'Accepts' doesn't need special case.  Wwaiting to find need to test.
             }
             ajax._addHeader(name, value, type);
         }
