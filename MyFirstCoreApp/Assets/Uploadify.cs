@@ -19,27 +19,24 @@ namespace MyFirstCoreApp
             this.uploadTarget = targetPath;
         }
 
-        public async Task<List<uploadStatus>> UploadFiles(List<IFormFile> files)
+        public  void UploadFilesAsync(List<IFormFile> files)
         {
             List<uploadStatus> uploads = new List<uploadStatus>();
             // full path to file in temp location
-            
             foreach (var formFile in files)
             {
                 var filePath = Path.GetTempFileName();
                 using (var stream = new FileStream(filePath, FileMode.Create))
                 {
-                    
                     string fileName = ContentDispositionHeaderValue.Parse(formFile.ContentDisposition).FileName.Trim('"');
                     uploadStatus file = new uploadStatus();
                     file.url = fileName;
-                    file.status = formFile.CopyToAsync(stream).Wait;
+                    string newFile = Path.GetDirectoryName(fileName) + Path.DirectorySeparatorChar.ToString() + fileName;
+                    //formFile.CopyTo(newFile);
                     uploads.Add(file);
-                    
                 }
             }
-
-            return await uploads;
+            //return uploads;
         }
         public class uploadStatus
         {

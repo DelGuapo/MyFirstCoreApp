@@ -178,20 +178,16 @@ namespace MyFirstCoreApp.Controllers
         [HttpPost("upload")]
         public async Task<IActionResult> Post(List<IFormFile> files)
         {
-            
-
-            
-
             long size = files.Sum(f => f.Length);
 
-            if(files.Count != 0)
+            if(files.Count == 0)
             {
                 return BadRequest("No files found.  Ensure that the name in the key:value pair of your file is called [files]");
             }
             else
             {
                 Uploadify uploads = new Uploadify("target path");
-                return Ok(uploads.UploadFiles(files));
+                return Ok(uploads.UploadFilesAsync(files));
             }
         }
     }
