@@ -1,11 +1,13 @@
 ﻿using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http.Headers;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace MyFirstCoreApp
@@ -14,35 +16,53 @@ namespace MyFirstCoreApp
     public class Uploadify
     {
         string uploadTarget;
+        public List<uploadStatus> uploads;
+
         public Uploadify(string targetPath)
         {
             this.uploadTarget = targetPath;
         }
 
-        public  void UploadFilesAsync(List<IFormFile> files)
+        public async Task<object> UploadFilesAsync(List<IFormFile> files)
         {
-            List<uploadStatus> uploads = new List<uploadStatus>();
-            // full path to file in temp location
+            uploads = new List<uploadStatus>();
+            List<Task> tasks = new List<Task>();
             foreach (var formFile in files)
             {
-                var filePath = Path.GetTempFileName();
-                using (var stream = new FileStream(filePath, FileMode.Create))
+                
+                string fileName = ContentDispositionHeaderValue.Parse(formFile.ContentDisposition).FileName.Trim('"');
+                uploadStatus file = new uploadStatus();
+                file.url = fileName;
+                string targetPath = uploadTarget + fileName;
+                try
                 {
-                    string fileName = ContentDispositionHeaderValue.Parse(formFile.ContentDisposition).FileName.Trim('"');
-                    uploadStatus file = new uploadStatus();
-                    file.url = fileName;
-                    string newFile = Path.GetDirectoryName(fileName) + Path.DirectorySeparatorChar.ToString() + fileName;
-                    //formFile.CopyTo(newFile);
-                    uploads.Add(file);
+                    using (var stream = new FileStream(targetPath, FileMode.Create))
+                    {
+                        string newFile = uploadTarget + fileName;
+                        Task copyFile = formFile.CopyToAsync(stream);// <<==== why is this erroring out here.
+                        tasks.Add(copyFile);
+                        file.success = true;
+                    }
                 }
+                catch(Exception err)
+                {
+                    file.success = false;
+                    file.errorMessage = err.Message;
+                }
+                uploads.Add(file);
             }
-            //return uploads;
+            
+            /* merge all uploads  */
+            Task mergedTasks = Task.WhenAll(tasks);
+            return mergedTasks;
         }
+
         public class uploadStatus
         {
+            public Action<object> doUplaod;
             public string url { get; set; }
-            public Boolean status { get; set; }
-            Boolean message { get; set; }
+            public Boolean success { get; set; }
+            public string errorMessage { get; set; }
         }
     }
 }

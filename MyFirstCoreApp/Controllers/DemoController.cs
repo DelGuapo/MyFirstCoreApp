@@ -186,8 +186,10 @@ namespace MyFirstCoreApp.Controllers
             }
             else
             {
-                Uploadify uploads = new Uploadify("target path");
-                return Ok(uploads.UploadFilesAsync(files));
+                Uploadify u = new Uploadify("C:\\temp\\");
+                Task uploadFiles = u.UploadFilesAsync(files);
+                uploadFiles.Wait();
+                return Ok(u.uploads);
             }
         }
     }
