@@ -175,7 +175,7 @@ namespace MyFirstCoreApp.Controllers
         /// </summary>
         /// <param name="files"></param>
         /// <returns></returns>
-        [HttpPost("upload")]
+        [HttpPut("file/upload")]
         public async Task<IActionResult> Post(List<IFormFile> files)
         {
             long size = files.Sum(f => f.Length);
@@ -186,11 +186,54 @@ namespace MyFirstCoreApp.Controllers
             }
             else
             {
-                Uploadify u = new Uploadify("C:\\temp\\");
+                Uploadify u = new Uploadify("C:\\temp\\"); // <<== upload target
                 Task uploadFiles = u.UploadFilesAsync(files);
                 uploadFiles.Wait();
                 return Ok(u.uploads);
             }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="link"></param>
+        /// <returns></returns>
+        [HttpGet("file/download")]
+        public IActionResult GetBlobDownload([FromQuery] string link)
+        {
+            var net = new System.Net.WebClient();
+            var data = net.DownloadData(link);
+            var content = new System.IO.MemoryStream(data);
+            var contentType = "APPLICATION/octet-stream";
+            var fileName = "something.bin";
+            return File(content, contentType, fileName);
+        }
+
+        [HttpGet("ssh/shell")]
+        public IActionResult SSHConnect()
+        {
+            string pwd = (System.IO.File.Exists("pwd.txt")) ? System.IO.File.ReadAllText("pwd.txt") : "";
+            SSHify ssh = new SSHify("sftp.rxebate.com", 22, "Nick", pwd);   
+            return Ok(ssh.shellScript("ls"));
+        }
+
+        [HttpGet("ssh/ftp/upload")]
+        public IActionResult sshFtpUpload()
+        {
+            string pwd = (System.IO.File.Exists("pwd.txt")) ? System.IO.File.ReadAllText("pwd.txt") : "";
+            SSHify ssh = new SSHify("sftp.rxebate.com", 22, "Nick", pwd);
+            ssh.lsDir("");
+            return Ok(ssh.uploadFile("C:\\temp\\Summary.pdf","RxETEST/upload"));
+        }
+
+        [HttpGet("ssh/ftp/download")]
+        public IActionResult sshFtpDownload()
+        {
+            string pwd = (System.IO.File.Exists("pwd.txt")) ? System.IO.File.ReadAllText("pwd.txt") : "";
+            SSHify ssh = new SSHify("sftp.rxebate.com", 22, "Nick", pwd);
+            ssh.lsDir("");
+
+            return Ok(ssh.downloadFile("RxETEST/upload/test.png","C://temp//"));
         }
     }
 }

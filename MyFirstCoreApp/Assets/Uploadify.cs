@@ -1,18 +1,13 @@
-﻿using Microsoft.AspNetCore.DataProtection;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net.Http.Headers;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace MyFirstCoreApp
 {
-    
+
     public class Uploadify
     {
         string uploadTarget;
@@ -56,6 +51,7 @@ namespace MyFirstCoreApp
             Task mergedTasks = Task.WhenAll(tasks);
             return mergedTasks;
         }
+
 
         public class uploadStatus
         {
