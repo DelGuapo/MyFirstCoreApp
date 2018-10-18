@@ -113,6 +113,22 @@ namespace MyFirstCoreApp.Controllers
         }
 
         /// <summary>
+        /// Encrypt your objects with up-to-date .netCore encryption standards.
+        /// </summary>
+        /// <returns>
+        /// Demo encrypted "Secret Message" with the hash of "YOUR_HASH_HERE" used
+        /// </returns>
+        [HttpGet("Cryptify/file")]
+        public IActionResult CryptifyFileDemo()
+        {
+            Cryptify crypt = new Cryptify("YOUR_HASH_HERE");
+            crypt.AES_Encrypt(null);
+            crypt.AES_Decrypt(null);
+            return Ok();
+
+        }
+
+        /// <summary>
         /// Execute AJAX commands (the current route uses COUCH db as demo)
         /// </summary>
         /// <returns>
