@@ -122,10 +122,9 @@ namespace MyFirstCoreApp.Controllers
         public IActionResult CryptifyFileDemo()
         {
             Cryptify crypt = new Cryptify("YOUR_HASH_HERE");
-            crypt.AES_Encrypt(null);
-            crypt.AES_Decrypt(null);
-            return Ok();
-
+            int success1 = crypt.AES_Encrypt("C:\\temp\\test.txt", "password",null,false);
+            int success2 = crypt.AES_Decrypt("C:\\temp\\test.txt.aes","password", "C:\\temp\\test_decrpyted.txt",false);
+            return StatusCode(success1);
         }
 
         /// <summary>
