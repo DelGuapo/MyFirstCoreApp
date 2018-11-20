@@ -91,7 +91,7 @@ namespace MyFirstCoreApp
                 string directory = Path.GetDirectoryName(inputFilePath);
                 //http://stackoverflow.com/questions/27645527/aes-encryption-on-large-files
 
-                byte[] salt = System.Text.Encoding.UTF8.GetBytes(_hash);
+                byte[] salt = System.Text.Encoding.UTF8.GetBytes(encode(_hash));
 
                 //create output file name
                 FileStream fsCrypt = new FileStream(inputFilePath + ".aes", FileMode.Create);
@@ -103,6 +103,7 @@ namespace MyFirstCoreApp
                 AES.Padding = PaddingMode.PKCS7;
 
                 //write salt to the begining of the output file, so in this case can be random every time
+                
                 fsCrypt.Write(salt, 0, salt.Length);
 
                 //create output stream (encrypted)
