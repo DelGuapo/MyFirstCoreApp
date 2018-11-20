@@ -42,16 +42,27 @@ namespace MyFirstCoreApp
             return crypt.decode(encryptedValue);
         }
 
-        public int AES_Encrypt(string filePath, string password, string output, Boolean destroyOld)
+        public fileEncryptionStatus AES_Encrypt(string filePath, string password, string output, Boolean destroyOld)
         {
             return crypt.AES_Encrypt(filePath, password,output, destroyOld);
         }
 
-        public int AES_Decrypt(string filePath, string password, string output, Boolean destroyOld)
+        public fileEncryptionStatus AES_Decrypt(string filePath, string password, string output, Boolean destroyOld)
         {
             return crypt.AES_Decrypt(filePath, password, output,destroyOld);
         }
 
+
+        public class fileEncryptionStatus
+        {
+            public int code;
+            public string message;
+            public fileEncryptionStatus(int code, string message)
+            {
+                this.code = code;
+                this.message = message;
+            }
+        }
         /* Private facing _criptify does the cryptographic work with the injected 
          * DataProtectionProvider.
          */
@@ -88,13 +99,13 @@ namespace MyFirstCoreApp
                 
             }
 
-            public int AES_Encrypt(string inputFilePath, string password, string outputFilePath = null, Boolean destroyOld = true)
+            public fileEncryptionStatus AES_Encrypt(string inputFilePath, string password, string outputFilePath = null, Boolean destroyOld = true)
             {
                 //http://stackoverflow.com/questions/27645527/aes-encryption-on-large-files
 
                 if (!File.Exists(inputFilePath))
                 {
-                    return 404;
+                    return new fileEncryptionStatus(404, "Source file does not exist");
                 }
 
                 /* Each file requires unique password. */
@@ -140,11 +151,11 @@ namespace MyFirstCoreApp
                 {
                     File.Delete(inputFilePath);
                 }
-                return 201;
+                return new fileEncryptionStatus(201, Path.GetFileName(outputFilePath));
             }
 
 
-            public int AES_Decrypt(string inputFilePath, string password, string outputFilePath, Boolean destroyOld = true)
+            public fileEncryptionStatus AES_Decrypt(string inputFilePath, string password, string outputFilePath, Boolean destroyOld = true)
             {
                 //todo:
                 // - create error message on wrong password
@@ -155,7 +166,7 @@ namespace MyFirstCoreApp
 
                 if (!File.Exists(inputFilePath))
                 {
-                    return 404;
+                    return new fileEncryptionStatus(404, "Source file does not exist");
                 }
 
                 byte[] passwordBytes = Encoding.ASCII.GetBytes(password);
@@ -196,9 +207,11 @@ namespace MyFirstCoreApp
                     File.Delete(inputFilePath);
                 }
 
-                return 201;
+                return new fileEncryptionStatus(201, Path.GetFileName(outputFilePath));
             }
         }
 
     }
+
+    
 }
