@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Text;
 
 namespace MyFirstCoreApp
 {
@@ -41,14 +42,14 @@ namespace MyFirstCoreApp
             return crypt.decode(encryptedValue);
         }
 
-        public string AES_Encrypt(string fileName)
+        public int AES_Encrypt(string filePath, string password, string output, Boolean destroyOld)
         {
-            return crypt.AES_Encrypt();
+            return crypt.AES_Encrypt(filePath, password,output, destroyOld);
         }
 
-        public string AES_Decrypt(string fileName)
+        public int AES_Decrypt(string filePath, string password, string output, Boolean destroyOld)
         {
-            return crypt.AES_Decrypt();
+            return crypt.AES_Decrypt(filePath, password, output,destroyOld);
         }
 
         /* Private facing _criptify does the cryptographic work with the injected 
@@ -58,12 +59,14 @@ namespace MyFirstCoreApp
         {
             IDataProtector _protector;
             string _hash;
+            string _hash2;
             int _bufferSizeMb = 1;
             public _criptify(IDataProtectionProvider
                 provider, string hash)
             {
                 _hash = hash;
                 _protector = provider.CreateProtector(hash);
+                _hash2 = _protector.Protect(hash);
                 
             }
 
@@ -85,63 +88,63 @@ namespace MyFirstCoreApp
                 
             }
 
-            public string AES_Encrypt(string inputFilePath = "C:\\temp\\test.txt")
+            public int AES_Encrypt(string inputFilePath, string password, string outputFilePath = null, Boolean destroyOld = true)
             {
-                string inputFile = Path.GetFileName(inputFilePath);
-                string directory = Path.GetDirectoryName(inputFilePath);
                 //http://stackoverflow.com/questions/27645527/aes-encryption-on-large-files
 
-                byte[] salt = System.Text.Encoding.UTF8.GetBytes(encode(_hash));
+                if (!File.Exists(inputFilePath))
+                {
+                    return 404;
+                }
+
+                /* Each file requires unique password. */
+                byte[] passwordBytes = Encoding.ASCII.GetBytes(password);
+                string inputFile = Path.GetFileName(inputFilePath);
+                string directory = Path.GetDirectoryName(inputFilePath);
+                
+                byte[] saltBytes = Encoding.ASCII.GetBytes(_hash);
 
                 //create output file name
-                FileStream fsCrypt = new FileStream(inputFilePath + ".aes", FileMode.Create);
+                if (outputFilePath == null)
+                {
+                    outputFilePath = inputFilePath + ".aes";
+                }
+                FileStream fsCrypt = new FileStream(outputFilePath, FileMode.Create);
 
                 //Set Rijndael symmetric encryption algorithm
                 RijndaelManaged AES = new RijndaelManaged();
                 AES.KeySize = 256;
                 AES.BlockSize = 128;
-                AES.Padding = PaddingMode.PKCS7;
 
-                //write salt to the begining of the output file, so in this case can be random every time
-                
-                fsCrypt.Write(salt, 0, salt.Length);
+                var key = new Rfc2898DeriveBytes(passwordBytes, saltBytes, 1000);
+                AES.Key = key.GetBytes(AES.KeySize / 8);
+                AES.IV = key.GetBytes(AES.BlockSize / 8);
+                AES.Padding = PaddingMode.Zeros;
+                AES.Mode = CipherMode.CBC;
 
                 //create output stream (encrypted)
                 CryptoStream cs = new CryptoStream(fsCrypt, AES.CreateEncryptor(), CryptoStreamMode.Write);
 
                 FileStream fsIn = new FileStream(inputFilePath, FileMode.Open);
 
-                //create a buffer (1mb) so only this amount will allocate in the memory and not the whole file
-                byte[] buffer = new byte[1048576];
-                int read;
+                int data;
+                
+                while ((data = fsIn.ReadByte()) != -1)
+                    cs.WriteByte((byte)data);
+                 
+                fsIn.Close();
+                cs.Close();
+                fsCrypt.Close();
 
-                try
+                if (destroyOld)
                 {
-                    while ((read = fsIn.Read(buffer, 0, buffer.Length)) > 0)
-                    {
-                        //Application.DoEvents(); // -> for responsive GUI, using Task will be better!
-                        cs.Write(buffer, 0, read);
-                    }
-
-                    //close up
-                    fsIn.Close();
-
+                    File.Delete(inputFilePath);
                 }
-                catch (Exception err)
-                {
-                    Console.WriteLine(err.Message);
-                }
-                finally
-                {
-                    cs.Close();
-                    fsCrypt.Close();
-                }
-
-                return inputFile;
+                return 201;
             }
 
 
-            public string AES_Decrypt(string inputFilePath = "C:\\temp\\test.txt.aes")
+            public int AES_Decrypt(string inputFilePath, string password, string outputFilePath, Boolean destroyOld = true)
             {
                 //todo:
                 // - create error message on wrong password
@@ -150,64 +153,50 @@ namespace MyFirstCoreApp
                 // - create a better filen name
                 // - could be check md5 hash on the files but it make this slow
 
+                if (!File.Exists(inputFilePath))
+                {
+                    return 404;
+                }
+
+                byte[] passwordBytes = Encoding.ASCII.GetBytes(password);
+                byte[] saltBytes = Encoding.ASCII.GetBytes(_hash);
+
                 string inputFile = Path.GetFileName(inputFilePath);
                 string directory = Path.GetDirectoryName(inputFilePath);
-
-                byte[] saltBytes = System.Text.Encoding.UTF8.GetBytes(_hash);
-                byte[] salt = new byte[32];
-
+                
                 FileStream fsCrypt = new FileStream(inputFilePath, FileMode.Open);
-                fsCrypt.Read(salt, 0, salt.Length);
 
+                //Set Rijndael symmetric encryption algorithm
                 RijndaelManaged AES = new RijndaelManaged();
                 AES.KeySize = 256;
                 AES.BlockSize = 128;
-                var key = new Rfc2898DeriveBytes(saltBytes, salt, 50000);
+
+                var key = new Rfc2898DeriveBytes(passwordBytes, saltBytes, 1000);
                 AES.Key = key.GetBytes(AES.KeySize / 8);
                 AES.IV = key.GetBytes(AES.BlockSize / 8);
-                AES.Padding = PaddingMode.PKCS7;
-                AES.Mode = CipherMode.CFB;
+                AES.Padding = PaddingMode.Zeros;
+                AES.Mode = CipherMode.CBC;
 
+
+                /* Stream this crap and decrypt it like a boss */
                 CryptoStream cs = new CryptoStream(fsCrypt, AES.CreateDecryptor(), CryptoStreamMode.Read);
 
-                FileStream fsOut = new FileStream(inputFilePath + ".decrypted", FileMode.Create);
+                FileStream fsOut = new FileStream(outputFilePath, FileMode.Create);
 
-                int read;
-                byte[] buffer = new byte[1048576];
+                int data;
+                while ((data = cs.ReadByte()) != -1)
+                    fsOut.WriteByte((byte)data);
 
-                try
-                {
-                    while ((read = cs.Read(buffer, 0, buffer.Length)) > 0)
-                    {
-                        //Application.DoEvents();
-                        fsOut.Write(buffer, 0, read);
-                    }
-                }
-                catch (System.Security.Cryptography.CryptographicException ex_CryptographicException)
-                {
+                fsOut.Close();
+                cs.Close();
+                fsCrypt.Close();
 
-                    Console.WriteLine("CryptographicException error: " + ex_CryptographicException.Message);
-                }
-                catch (Exception ex)
+                if (destroyOld)
                 {
-                    Console.WriteLine("Error: " + ex.Message);
+                    File.Delete(inputFilePath);
                 }
 
-                try
-                {
-                    cs.Close();
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine("Error by closing CryptoStream: " + ex.Message);
-                }
-                finally
-                {
-                    fsOut.Close();
-                    fsCrypt.Close();
-                }
-
-                return "DONE";
+                return 201;
             }
         }
 
