@@ -53,8 +53,10 @@ namespace MyFirstCoreApp.Controllers
                 new SqlParameter("item_value", (object)"ItemVal"),
                 new SqlParameter("item_descrip", (object)"ItemDescrip")
             };
-                string sqlText = "exec insConfig @item_class,@item_name,@item_value,@item_descrip";
-                DataTable rsp = sql.SqlDataTable(sqlText, sqlParams);
+                //string sqlText = "exec insConfig @item_class,@item_name,@item_value,@item_descrip";
+                //DataTable rsp = sql.SqlDataTable(sqlText, sqlParams);
+                string sqlText = "select * from test.demo";
+                DataTable rsp = sql.SqlDataTable(sqlText);
                 return Ok(new Stringify().fromTable(rsp));
             }
             else
@@ -142,7 +144,10 @@ namespace MyFirstCoreApp.Controllers
             return Ok(rsp);
         }
 
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         [HttpGet("AJAXify/basic")]
         public async Task<ActionResult> GetAjax()
         {
