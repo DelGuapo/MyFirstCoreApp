@@ -21,13 +21,19 @@ namespace MyFirstCoreApp
         /// To the Developer: FILL THIS OUT
         /// </summary>
         private string APIName = "MyFirstCoreApp";
-        private string APIDescrip = @"This is a boilerplate .net-core app that demonstrates several featurs. 
-                                      Not all routes will work out of the box because they assume you have
-                                      external services provided (SQL Server, Couch DB, etc..).  However, the 
-                                      code is descriptive enough to get you started with your own project.";
-        private string APIRepo = "http://Link-To-Git-Repo";
+        private string APIRepo = "https://github.com/DelGuapo/MyFirstCoreApp";
         private string APIOwner = "delGuapo";
+        private string APIDescrip = 
+@"This is a boilerplate .net-core app that demonstrates several featurs. 
+Not all routes will work out of the box because they assume you have
+external services provided (SQL Server, Couch DB, etc..).  However, the 
+code is descriptive enough to get you started with your own project.
 
+<h3>Deployment Resources</h3>
+<a href='https://www.microsoft.com/net/learn/dotnet/hello-world-tutorial#linuxubuntu%22'>Setup .NET-CORE</a>
+<a href='https://www.digitalocean.com/community/tutorials/how-to-install-nginx-on-ubuntu-18-04'>Setup NGINX</a>
+<a href='https://linuxconfig.org/how-to-enable-disable-firewall-on-ubuntu-18-04-bionic-beaver-linux'>Enable Firewall</a>
+";
 
 
 
