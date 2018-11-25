@@ -66,6 +66,29 @@ namespace MyFirstCoreApp.Controllers
 
         }
 
+
+        /// <summary>
+        /// Under Dev
+        /// </summary>
+        /// <returns>JSON object of the result table</returns>
+        [HttpGet("PostGressify")]
+        public IActionResult PostGressify()
+        {
+            if (System.IO.File.Exists("cnstring.txt"))
+            {
+                string cnString = System.IO.File.ReadAllText("cnstring.txt");
+                Postgressify sql = new Postgressify(cnString, true);
+                string sqlText = "select * from test.demo";
+                DataTable rsp = sql.SqlDataTable(sqlText);
+                return Ok(new Stringify().fromTable(rsp));
+            }
+            else
+            {
+                return NotFound(@"This demo only works if you have a connection string provided (or cnstring.txt) and a valid SQL command");
+            }
+
+        }
+
         /// <summary>
         ///  COnvert your classes,datatables, and objects to strings for HTTP responses
         /// </summary>
