@@ -1,5 +1,6 @@
 # My First Net CORE app
-Playing around...
+Authentication: https://github.com/aspnet/AspNetCore/issues/2193
+
 
 
 # Ubuntu
@@ -26,6 +27,7 @@ Playing around...
 
 1. Configure a new site for NGINX
     - https://waqarafridi.wordpress.com/2017/12/20/nginx-web-server-and-first-site/
+
 
 
 
